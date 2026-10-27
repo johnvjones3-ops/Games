@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#140c2e">
+  <meta name="description" content="Launch it, drive it, upgrade it, evolve it. A physics distance game.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Slingshot">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <title>Slingshot Garage</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Game view"></canvas>
+
+  <div id="ui">
+    <!-- In-run HUD -->
+    <div id="hud" hidden>
+      <div class="hud-top">
+        <div class="hud-dist"><span id="h-dist">0</span><small>m</small></div>
+        <div class="hud-sub"><span id="h-speed">0</span> km/h <span class="sep">•</span> <span id="h-alt">0</span> m up</div>
+        <div class="hud-progress" aria-hidden="true">
+          <div class="track"><i id="h-prog"></i><b id="h-best-tick"></b></div>
+          <div class="hud-next" id="h-next"></div>
+        </div>
+      </div>
+      <div class="hud-gauges">
+        <div class="gauge" data-kind="fuel"><span>Fuel</span><div class="bar"><i id="h-fuel"></i></div></div>
+        <div class="gauge" data-kind="nitro" id="g-nitro"><span>Rocket</span><div class="bar"><i id="h-nitro"></i></div></div>
+        <div class="gauge" data-kind="hp"><span>Hull</span><div class="bar"><i id="h-hp"></i></div></div>
+      </div>
+      <div class="hud-right">
+        <div class="pill"><span class="ico" data-icon="coin"></span><b id="h-coins">0</b></div>
+        <button class="icon-btn" id="btn-pause" aria-label="Pause"><span class="ico" data-icon="pause"></span></button>
+      </div>
+      <div id="banner" class="banner" aria-live="polite"></div>
+    </div>
+
+    <div id="controls" hidden>
+      <button class="pedal brake" id="btn-brake" aria-label="Brake / lean forward">
+        <span class="ico ground" data-icon="brake"></span><span class="ico air" data-icon="cw"></span>
+      </button>
+      <button class="pedal boost" id="btn-boost" aria-label="Rocket boost"><span class="ico" data-icon="rocket"></span></button>
+      <button class="pedal gas" id="btn-gas" aria-label="Gas / lean back">
+        <span class="ico ground" data-icon="gas"></span><span class="ico air" data-icon="ccw"></span>
+      </button>
+    </div>
+
+    <div id="aim-ui" hidden>
+      <div class="aim-hint" id="aim-hint">
+        <div class="hand"></div>
+        <p>Drag back, aim, and let go!</p>
+      </div>
+      <div class="aim-readout" id="aim-readout"></div>
+      <button class="ghost-btn" id="btn-aim-back"><span class="ico" data-icon="home"></span> Garage</button>
+    </div>
+
+    <!-- Garage -->
+    <div id="garage" hidden>
+      <header class="topbar">
+        <div class="pill gen" title="Generation">Gen <b id="g-gen">1</b></div>
+        <div class="pill"><span class="ico" data-icon="coin"></span><b id="g-coins">0</b></div>
+        <div class="pill"><span class="ico" data-icon="dna"></span><b id="g-dna">0</b></div>
+        <span class="spacer"></span>
+        <button class="icon-btn" id="btn-daily" aria-label="Daily bonus" hidden><span class="ico" data-icon="gift"></span></button>
+        <button class="icon-btn" id="btn-settings" aria-label="Settings"><span class="ico" data-icon="gear"></span></button>
+      </header>
+
+      <div class="car-card">
+        <div class="stage-row">
+          <h1 id="g-stage">Soapbox</h1>
+          <button class="icon-btn small" id="btn-paint" aria-label="Paint"><span class="ico" data-icon="paint"></span></button>
+        </div>
+        <div class="stage-next"><div class="bar"><i id="g-stage-bar"></i></div><span id="g-stage-next"></span></div>
+        <div class="best-row"><span>Best <b id="g-best">0 m</b></span><span id="g-world"></span></div>
+        <div class="paints" id="paints" hidden></div>
+      </div>
+
+      <section class="sheet">
+        <nav class="tabs" role="tablist">
+          <button role="tab" data-tab="upgrades" class="active">Upgrades</button>
+          <button role="tab" data-tab="missions">Missions<i class="dot" id="dot-missions" hidden></i></button>
+          <button role="tab" data-tab="lab">DNA Lab<i class="dot" id="dot-lab" hidden></i></button>
+          <button role="tab" data-tab="trophies">Trophies</button>
+        </nav>
+        <div class="tab-body" id="tab-upgrades">
+          <div class="buy-amount" role="group" aria-label="Buy amount">
+            <span>Buy</span>
+            <button data-amt="1">x1</button><button data-amt="10">x10</button><button data-amt="max">Max</button>
+          </div>
+          <div class="cards" id="upgrade-list"></div>
+        </div>
+        <div class="tab-body" id="tab-missions" hidden></div>
+        <div class="tab-body" id="tab-lab" hidden></div>
+        <div class="tab-body" id="tab-trophies" hidden></div>
+      </section>
+
+      <button id="btn-launch" class="launch">Launch</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="modal" hidden>
+      <div class="panel results-panel">
+        <div class="ribbon" id="r-ribbon" hidden>New record!</div>
+        <p class="reason" id="r-reason"></p>
+        <div class="big-dist"><span id="r-dist">0</span><small>m</small></div>
+        <div class="breakdown" id="r-breakdown"></div>
+        <div class="total-row"><span>Total</span><b><span class="ico" data-icon="coin"></span><span id="r-total">0</span></b></div>
+        <div class="chips" id="r-chips"></div>
+        <div class="r-missions" id="r-missions"></div>
+        <div class="r-hint" id="r-hint"></div>
+        <div class="row-btns">
+          <button class="btn secondary" id="btn-r-garage"><span class="ico" data-icon="home"></span> Garage</button>
+          <button class="btn primary" id="btn-r-retry"><span class="ico" data-icon="retry"></span> Launch again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause" class="modal" hidden>
+      <div class="panel small">
+        <h2>Paused</h2>
+        <button class="btn primary" id="btn-resume"><span class="ico" data-icon="play"></span> Resume</button>
+        <button class="btn secondary" id="btn-endrun">Bank distance &amp; end run</button>
+        <button class="btn secondary" id="btn-quit">Abandon run (no coins)</button>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings" class="modal" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>Settings</h2><button class="icon-btn" data-close aria-label="Close"><span class="ico" data-icon="close"></span></button></div>
+        <div class="settings-list">
+          <label class="toggle"><span>Sound effects</span><input type="checkbox" data-setting="sound"><i></i></label>
+          <label class="toggle"><span>Music</span><input type="checkbox" data-setting="music"><i></i></label>
+          <label class="toggle"><span>Landing assist <small>auto-levels the car near the ground</small></span><input type="checkbox" data-setting="assist"><i></i></label>
+          <label class="toggle"><span>Ghost of best run</span><input type="checkbox" data-setting="ghost"><i></i></label>
+          <label class="toggle"><span>Vibration</span><input type="checkbox" data-setting="haptics"><i></i></label>
+          <label class="select"><span>Graphics</span>
+            <select data-setting="quality"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low (battery saver)</option></select>
+          </label>
+        </div>
+        <details class="help">
+          <summary>How to play</summary>
+          <ul>
+            <li><b>Launch:</b> drag back from anywhere, aim, release. Further back = more power.</li>
+            <li><b>Drive:</b> hold <b>▶</b> (→ / D) for gas, <b>◀</b> (← / A) to brake or reverse.</li>
+            <li><b>In the air</b> the same buttons tilt the car: gas leans back, brake leans forward.</li>
+            <li><b>Rocket:</b> hold the rocket button (Space). Refill with blue canisters.</li>
+            <li>Flips, perfect landings and long hang time pay bonus coins.</li>
+            <li>Red cans refuel you. Smash crates for coins. Green pads give a speed boost.</li>
+            <li>Past 2 km you can <b>Evolve</b> in the DNA Lab: start a new world with permanent DNA perks.</li>
+            <li>Gamepads work too: triggers to drive, A for rocket.</li>
+          </ul>
+        </details>
+        <details class="help">
+          <summary>Lifetime stats</summary>
+          <div class="stats-grid" id="stats-grid"></div>
+        </details>
+        <div class="save-tools">
+          <button class="btn secondary" id="btn-export">Copy save code</button>
+          <button class="btn secondary" id="btn-import">Load save code</button>
+          <button class="btn danger" id="btn-reset">Reset progress</button>
+        </div>
+        <p class="fineprint">Slingshot Garage · progress is saved on this device.</p>
+      </div>
+    </div>
+
+    <div id="dialog" class="modal" hidden><div class="panel small" id="dialog-panel"></div></div>
+    <div id="overlay-fx" aria-live="polite"></div>
+    <div id="toasts" aria-live="polite"></div>
+    <div id="rotate-hint" hidden>Tip: turn your phone sideways for the best view</div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
