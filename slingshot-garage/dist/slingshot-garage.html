@@ -37,17 +37,9 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
+  /* The game deliberately keeps one night-glass look in both system themes. */
   color-scheme: dark;
 }
-
-/* The game always uses its own night-glass palette; these keep it explicit for both schemes. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) { --bg: #140c2e; --text: #f6f3ff; }
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #140c2e; --text: #f6f3ff; }
-}
-:root[data-theme="dark"] { --bg: #140c2e; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); overscroll-behavior: none; }
@@ -3608,7 +3600,9 @@ class Input {
   }
 
   pollGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let pads = [];
+    // getGamepads throws where a permissions policy blocks it (e.g. sandboxed embeds).
+    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch { pads = []; }
     const p = pads && Array.from(pads).find((x) => x && x.connected);
     if (!p) { this.pad.gas = this.pad.brake = 0; this.pad.boost = false; return; }
     const b = (i) => (p.buttons[i] ? p.buttons[i].value || (p.buttons[i].pressed ? 1 : 0) : 0);

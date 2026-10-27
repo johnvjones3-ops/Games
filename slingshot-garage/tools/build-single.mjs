@@ -69,3 +69,15 @@ mkdirSync(join(root, 'dist'), { recursive: true });
 const out = join(root, 'dist/slingshot-garage.html');
 writeFileSync(out, html);
 console.log(`wrote ${relative(root, out)} (${(html.length / 1024).toFixed(0)} KB, ${order.length} modules)`);
+
+// Hosts that supply their own document skeleton (e.g. claude.ai artifacts) get
+// just the title, styles, body content and script.
+if (process.argv.includes('--fragment')) {
+  const title = html.match(/<title>[^<]*<\/title>/)[0];
+  const style = html.match(/<style>[\s\S]*?<\/style>/)[0];
+  const body = html.match(/<body>([\s\S]*)<\/body>/)[1];
+  const fragment = `${title}\n${style}\n${body.trim()}\n`;
+  const fragOut = join(root, 'dist/slingshot-garage.fragment.html');
+  writeFileSync(fragOut, fragment);
+  console.log(`wrote ${relative(root, fragOut)} (${(fragment.length / 1024).toFixed(0)} KB)`);
+}

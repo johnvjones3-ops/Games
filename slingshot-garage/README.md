@@ -78,7 +78,7 @@ generation; and terrain tuned with the balance simulator so there are no unclimb
 npm test                         # unit tests (node:test, no dependencies)
 npm run sim -- 150 1 --evolve    # balance simulator: an autopilot plays and shops
 npm run smoke                    # headless-browser smoke test + screenshots (needs Playwright)
-node tools/build-single.mjs      # rebuild dist/slingshot-garage.html
+node tools/build-single.mjs      # rebuild dist/slingshot-garage.html (--fragment: also a skeleton-less build for embedding hosts)
 node tools/make-icons.mjs        # rasterize icons/icon.svg into PNGs
 ```
 

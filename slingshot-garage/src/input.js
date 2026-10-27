@@ -39,7 +39,9 @@ export class Input {
   }
 
   pollGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let pads = [];
+    // getGamepads throws where a permissions policy blocks it (e.g. sandboxed embeds).
+    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch { pads = []; }
     const p = pads && Array.from(pads).find((x) => x && x.connected);
     if (!p) { this.pad.gas = this.pad.brake = 0; this.pad.boost = false; return; }
     const b = (i) => (p.buttons[i] ? p.buttons[i].value || (p.buttons[i].pressed ? 1 : 0) : 0);
